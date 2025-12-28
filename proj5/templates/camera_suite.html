@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Camera Suite</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
+        #container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        video { position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 1; transform: scaleX(-1); }
+        #output-canvas, #processed-img { position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 2; pointer-events: none; }
+        #ui-layer { position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px; box-sizing: border-box; z-index: 10; background: linear-gradient(transparent, rgba(0,0,0,0.8)); display: flex; flex-direction: column; gap: 10px; align-items: center; }
+        
+        select { padding: 10px 20px; border-radius: 25px; border: none; background: rgba(255,255,255,0.9); font-size: 16px; font-weight: bold; width: 100%; max-width: 300px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        button { padding: 15px 30px; border-radius: 50px; border: none; background: #ff4757; color: white; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4); transition: transform 0.2s; width: 100%; max-width: 300px; }
+        button:active { transform: scale(0.95); }
+        button.active { background: #2ed573; }
+
+        #overlay-text { position: absolute; top: 10%; width: 100%; text-align: center; color: white; font-size: 24px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 11; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <video id="video" playsinline></video>
+    <img id="processed-img" style="display:none;">
+    <div id="overlay-text"></div>
+
+    <div id="ui-layer">
+        <select id="model-select">
+            <option value="face-landmark">얼굴 랜드마크 (Face Landmark)</option>
+            <option value="hand-landmark">손 랜드마크 (Hand Landmark)</option>
+            <option value="pose-landmark">포즈 랜드마크 (Pose Landmark)</option>
+            <option value="detect">객체 감지 (Object Detection)</option>
+            <option value="face-detect">얼굴 감지 (Face Detection)</option>
+            <option value="classify">이미지 분류 (Classification)</option>
+        </select>
+        <button id="toggle-btn" onclick="toggleCamera()">카메라 시작</button>
+    </div>
+</div>
+
+<canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+    const video = document.getElementById('video');
+    const processedImg = document.getElementById('processed-img');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const modelSelect = document.getElementById('model-select');
+    const toggleBtn = document.getElementById('toggle-btn');
+    const overlayText = document.getElementById('overlay-text');
+
+    let stream = null;
+    let intervalId = null;
+    let isRunning = false;
+
+    async function toggleCamera() {
+        if (isRunning) {
+            stopCamera();
+        } else {
+            await startCamera();
+        }
+    }
+
+    async function startCamera() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } } 
+            });
+            video.srcObject = stream;
+            video.play();
+            isRunning = true;
+            toggleBtn.textContent = "정지";
+            toggleBtn.classList.add('active');
+            
+            // Start sending frames
+            intervalId = setInterval(processFrame, 200); // 5 FPS
+        } catch (err) {
+            alert("카메라 접근 실패: " + err);
+        }
+    }
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
+        clearInterval(intervalId);
+        isRunning = false;
+        toggleBtn.textContent = "카메라 시작";
+        toggleBtn.classList.remove('active');
+        processedImg.style.display = 'none';
+        overlayText.innerText = "";
+    }
+
+    async function processFrame() {
+        if (!video.videoWidth) return;
+
+        // Draw video frame to canvas
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert to Blob
+        canvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append("file", blob, "frame.jpg");
+
+            const model = modelSelect.value;
+            let endpoint = "";
+
+            if (model === 'face-landmark') endpoint = "/api/face-landmark";
+            else if (model === 'hand-landmark') endpoint = "/api/hand-landmark";
+            else if (model === 'pose-landmark') endpoint = "/api/pose-landmark";
+            else if (model === 'detect') endpoint = "/api/detect";
+            else if (model === 'face-detect') endpoint = "/api/face-detect";
+            else if (model === 'classify') endpoint = "/api/classify";
+
+            try {
+                const res = await fetch(endpoint, { method: "POST", body: formData });
+                const data = await res.json();
+
+                if (data.image_base64) {
+                    // Visual tasks: show returned image
+                    processedImg.src = "data:image/jpeg;base64," + data.image_base64;
+                    processedImg.style.display = 'block';
+                    overlayText.innerText = "";
+                } else if (data.results) {
+                    // Classification: show text
+                    processedImg.style.display = 'none';
+                    if (data.results.length > 0) {
+                        const top = data.results[0];
+                        overlayText.innerText = `${top.category} (${(top.score * 100).toFixed(1)}%)`;
+                    } else {
+                        overlayText.innerText = "분석 중...";
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }, 'image/jpeg', 0.8);
+    }
+</script>
+
+</body>
+</html>

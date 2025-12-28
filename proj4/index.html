@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>다마고치</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="game-container">
+        <!-- Background Layer (CSS Pattern) -->
+        <div id="background"></div>
+
+        <!-- UI Overlay -->
+        <div id="ui-layer">
+            <div id="hud-top">
+                <div id="hud-time" class="retro-text">DAY 1 | 6:00 AM</div>
+                <div id="hud-money" class="retro-text">💰 100G</div>
+            </div>
+
+            <div class="status-bar">
+                <div class="stat">
+                    <span class="label">HGR</span>
+                    <div class="gauge-container">
+                        <div id="gauge-hunger" class="gauge-fill"></div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="label">HAP</span>
+                    <div class="gauge-container">
+                        <div id="gauge-happiness" class="gauge-fill"></div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="label">AGE</span>
+                    <span id="value-age">0</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="btn-toggle-pet" class="retro-btn">VIEW PET</button>
+                <button id="btn-feed" class="retro-btn">FEED</button>
+                <button id="btn-play" class="retro-btn">PLAY</button>
+                <button id="btn-breed" class="retro-btn">BREED</button>
+                <button id="btn-shop" class="retro-btn">SHOP</button>
+            </div>
+        </div>
+
+        <!-- Canvas for Pet -->
+        <canvas id="pet-canvas" width="256" height="256"></canvas>
+
+        <!-- Notification / Modal Area -->
+        <div id="modal-overlay" class="hidden">
+            <div id="modal-content" class="retro-box">
+                <h2 id="modal-title">MINIGAME</h2>
+                <div id="minigame-ui" class="hidden">
+                    <div class="hands">
+                        <button class="hand-btn" data-choice="rock">✊</button>
+                        <button class="hand-btn" data-choice="paper">✋</button>
+                        <button class="hand-btn" data-choice="scissors">✌️</button>
+                    </div>
+                    <p id="minigame-result"></p>
+                </div>
+                <div id="breed-ui" class="hidden">
+                    <p>Searching for mate...</p>
+                </div>
+                <button id="btn-close-modal">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts (Order matters for non-module loading) -->
+    <script src="js/genetic.js"></script>
+    <script src="js/minigame.js"></script>
+    <script src="js/time.js"></script>
+    <script src="js/economy.js"></script>
+    <script src="js/garden.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/pet.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+</body>
+
+</html>

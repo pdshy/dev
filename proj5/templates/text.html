@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <h1 style="color: var(--primary-color); border-bottom: 2px solid #eee; padding-bottom: 0.5rem;">{{ title }}</h1>
+    <p style="margin-bottom: 2rem; color: #666;">{{ desc }}</p>
+
+    <div class="card" style="text-align: left;">
+        <div style="margin-bottom: 1.5rem;">
+            <label for="text-input" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">분석할 텍스트</label>
+            <textarea id="text-input" rows="5"
+                style="width: 100%; padding: 1rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;"
+                placeholder="여기에 텍스트를 입력하세요..."></textarea>
+        </div>
+
+        {% if is_similarity %}
+        <div style="margin-bottom: 1.5rem;">
+            <label for="compare-input" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">비교할 텍스트들 (한 줄에
+                하나씩)</label>
+            <textarea id="compare-input" rows="5"
+                style="width: 100%; padding: 1rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;"
+                placeholder="비교할 문장을 입력하세요...&#10;여러 문장은 줄바꿈으로 구분합니다."></textarea>
+        </div>
+        {% endif %}
+
+        <button class="btn" onclick="analyzeText('{{ endpoint }}')">분석하기</button>
+    </div>
+
+    <div id="loader" class="loader"></div>
+
+    <div id="result-box" class="result-box" style="display: none;">
+        <h3>분석 결과</h3>
+        <div id="results"></div>
+    </div>
+</div>
+{% endblock %}

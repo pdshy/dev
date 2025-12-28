@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <h1 style="color: var(--primary-color); border-bottom: 2px solid #eee; padding-bottom: 0.5rem;">{{ title }}</h1>
+    <p style="margin-bottom: 2rem; color: #666;">{{ desc }}</p>
+
+    <div style="display: flex; gap: 2rem; justify-content: space-between; margin-bottom: 2rem;">
+        <div style="flex: 1; text-align: center;">
+            <h3>기준 이미지 (File 1)</h3>
+            <div class="file-upload" onclick="document.getElementById('file1').click()" style="padding: 1rem;">
+                <input type="file" id="file1" accept="image/*" style="display: none;"
+                    onchange="previewFaceMatch(this, 'preview1')">
+                <p>이미지 1 선택</p>
+            </div>
+            <img id="preview1" src=""
+                style="max-width: 100%; max-height: 200px; display: none; margin-top: 1rem; border-radius: 8px;">
+        </div>
+
+        <div style="flex: 1; text-align: center;">
+            <h3>비교 이미지 (File 2)</h3>
+            <div class="file-upload" onclick="document.getElementById('file2').click()" style="padding: 1rem;">
+                <input type="file" id="file2" accept="image/*" style="display: none;"
+                    onchange="previewFaceMatch(this, 'preview2')">
+                <p>이미지 2 선택</p>
+            </div>
+            <img id="preview2" src=""
+                style="max-width: 100%; max-height: 200px; display: none; margin-top: 1rem; border-radius: 8px;">
+        </div>
+    </div>
+
+    <div style="text-align: center;">
+        <button class="btn" onclick="compareFaces()">얼굴 비교하기</button>
+    </div>
+
+    <div id="loader" class="loader"></div>
+
+    <div id="result-box" class="result-box" style="display: none;">
+        <h3>비교 결과</h3>
+        <div id="results"></div>
+    </div>
+</div>
+
+<script>
+    function previewFaceMatch(input, imgId) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = document.getElementById(imgId);
+                img.src = e.target.result;
+                img.style.display = 'inline-block';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function compareFaces() {
+        const f1 = document.getElementById('file1').files[0];
+        const f2 = document.getElementById('file2').files[0];
+
+        if (!f1 || !f2) {
+            alert('두 이미지를 모두 선택해주세요.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file1', f1);
+        formData.append('file2', f2);
+
+        const loader = document.getElementById('loader');
+        const resultBox = document.getElementById('result-box');
+
+        loader.style.display = 'block';
+        resultBox.style.display = 'none';
+
+        try {
+            const response = await fetch('{{ endpoint }}', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            renderResults(data);
+            resultBox.style.display = 'block';
+        } catch (error) {
+            alert('오류가 발생했습니다: ' + error);
+        } finally {
+            loader.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

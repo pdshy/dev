@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <h1 style="color: var(--primary-color); border-bottom: 2px solid #eee; padding-bottom: 0.5rem;">{{ title }}</h1>
+    <p style="margin-bottom: 2rem; color: #666;">{{ desc }}</p>
+
+    <div class="file-upload" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="previewImage(this)">
+        <p style="font-size: 1.2rem; color: #7f8c8d;">클릭하여 이미지를 업로드하세요</p>
+        <p style="font-size: 0.9rem; color: #bdc3c7;">(JPG, PNG 등 지원)</p>
+    </div>
+
+    <div id="preview-container" style="display: none; margin-bottom: 2rem;">
+        <h3>원본 이미지</h3>
+        <img id="preview-img" src="" alt="Preview">
+        <br><br>
+        <button class="btn" onclick="uploadImage('{{ endpoint }}')">분석 시작</button>
+    </div>
+
+    <div id="loader" class="loader"></div>
+
+    <div id="result-box" class="result-box" style="display: none;">
+        <h3>분석 결과</h3>
+        <div id="results"></div>
+    </div>
+</div>
+{% endblock %}
